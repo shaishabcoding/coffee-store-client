@@ -1,7 +1,9 @@
-import { useLoaderData } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLoaderData } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const Home = () => {
-  const coffees = useLoaderData();
+  const [coffees, setCoffees] = useState(useLoaderData());
   console.log(coffees);
   return (
     <div className="p-16 bg-sky-100 md:m-16 md:rounded-lg">
@@ -10,7 +12,40 @@ const Home = () => {
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {coffees.map((coffee) => {
-          const { name, photo, quantity, supplier, taste } = coffee;
+          const { _id, name, photo, quantity, supplier, taste } = coffee;
+          const handleDelete = () => {
+            console.log(_id);
+            Swal.fire({
+              title: "Are you sure?",
+              text: "You won't be able to revert this!",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+              confirmButtonText: "Yes, delete it!",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                fetch(`http://localhost:5000/coffee/delete/${_id}`, {
+                  method: "DELETE",
+                })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    console.log(data);
+                    if (data.deletedCount > 0) {
+                      const newCoffees = coffees.filter(
+                        (coffee) => coffee._id !== _id
+                      );
+                      setCoffees(newCoffees);
+                      Swal.fire({
+                        title: "Deleted!",
+                        text: "Your coffee has been deleted.",
+                        icon: "success",
+                      });
+                    }
+                  });
+              }
+            });
+          };
           return (
             <div
               key={coffee._id}
@@ -29,8 +64,15 @@ const Home = () => {
               </div>
               <div className="w-full md:w-fit flex md:flex-col justify-center gap-2">
                 <button className="btn btn-primary md:w-full">View</button>
-                <button className="btn btn-accent md:w-full">Update</button>
-                <button className="btn btn-error md:w-full">Delete</button>
+                <Link to={`/coffee/update/${_id}`}>
+                  <button className="btn btn-accent md:w-full">Update</button>
+                </Link>
+                <button
+                  className="btn btn-error md:w-full"
+                  onClick={handleDelete}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           );
